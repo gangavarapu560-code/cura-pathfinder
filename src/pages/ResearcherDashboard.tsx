@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Microscope, TestTube, Users, MessageSquare, LogOut } from "lucide-react";
 import { toast } from "sonner";
+import { AddTrialDialog } from "@/components/AddTrialDialog";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ResearcherProfile {
   name: string;
@@ -17,6 +19,8 @@ interface ResearcherProfile {
 const ResearcherDashboard = () => {
   const navigate = useNavigate();
   const [profile, setProfile] = useState<ResearcherProfile | null>(null);
+  const [trials, setTrials] = useState<any[]>([]);
+  const [isLoadingTrials, setIsLoadingTrials] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("researcherProfile");
@@ -25,7 +29,30 @@ const ResearcherDashboard = () => {
       return;
     }
     setProfile(JSON.parse(stored));
+    loadTrials();
   }, [navigate]);
+
+  const loadTrials = async () => {
+    setIsLoadingTrials(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data, error } = await supabase
+          .from("clinical_trials")
+          .select("*")
+          .eq("researcher_id", user.id)
+          .order("created_at", { ascending: false });
+
+        if (error) throw error;
+        setTrials(data || []);
+      }
+    } catch (error) {
+      console.error("Error loading trials:", error);
+    } finally {
+      setIsLoadingTrials(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("researcherProfile");
@@ -97,8 +124,50 @@ const ResearcherDashboard = () => {
                 <CardTitle>Manage Clinical Trials</CardTitle>
                 <CardDescription>Add and manage your research trials</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button>Add New Trial</Button>
+              <CardContent className="space-y-4">
+                <AddTrialDialog onTrialAdded={loadTrials} />
+                
+                {isLoadingTrials ? (
+                  <p className="text-muted-foreground text-center py-8">Loading trials...</p>
+                ) : trials.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No trials yet. Add your first clinical trial to get started.
+                  </p>
+                ) : (
+                  <div className="space-y-4 mt-6">
+                    {trials.map((trial) => (
+                      <Card key={trial.id} className="border-l-4 border-l-accent">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                              <CardTitle className="text-lg">{trial.title}</CardTitle>
+                              <CardDescription>{trial.description}</CardDescription>
+                            </div>
+                            <Badge variant="secondary">{trial.status}</Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <span className="text-muted-foreground">Phase:</span>{" "}
+                              <span className="font-medium">{trial.phase}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Start Date:</span>{" "}
+                              <span className="font-medium">
+                                {new Date(trial.start_date).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <div className="col-span-2">
+                              <span className="text-muted-foreground">Contact:</span>{" "}
+                              <span className="font-medium">{trial.contact_email}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
