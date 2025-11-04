@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Microscope, TestTube, Users, MessageSquare, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { AddTrialDialog } from "@/components/AddTrialDialog";
+import { AddQuestionDialog } from "@/components/AddQuestionDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ResearcherProfile {
@@ -21,6 +22,8 @@ const ResearcherDashboard = () => {
   const [profile, setProfile] = useState<ResearcherProfile | null>(null);
   const [trials, setTrials] = useState<any[]>([]);
   const [isLoadingTrials, setIsLoadingTrials] = useState(false);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -38,6 +41,7 @@ const ResearcherDashboard = () => {
       }
       setProfile(JSON.parse(stored));
       loadTrials();
+      loadQuestions();
     };
 
     checkAuth();
@@ -62,6 +66,23 @@ const ResearcherDashboard = () => {
       console.error("Error loading trials:", error);
     } finally {
       setIsLoadingTrials(false);
+    }
+  };
+
+  const loadQuestions = async () => {
+    setIsLoadingQuestions(true);
+    try {
+      const { data, error } = await supabase
+        .from("forum_questions")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setQuestions(data || []);
+    } catch (error) {
+      console.error("Error loading questions:", error);
+    } finally {
+      setIsLoadingQuestions(false);
     }
   };
 
@@ -200,10 +221,46 @@ const ResearcherDashboard = () => {
             <Card className="shadow-soft">
               <CardHeader>
                 <CardTitle>Forum Discussions</CardTitle>
-                <CardDescription>Engage with patient questions</CardDescription>
+                <CardDescription>Engage with community questions</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Button>View Questions</Button>
+              <CardContent className="space-y-4">
+                <AddQuestionDialog onQuestionAdded={loadQuestions} />
+                
+                {isLoadingQuestions ? (
+                  <p className="text-muted-foreground text-center py-8">Loading questions...</p>
+                ) : questions.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No questions yet. Be the first to ask a question!
+                  </p>
+                ) : (
+                  <div className="space-y-4 mt-6">
+                    {questions.map((question) => (
+                      <Card key={question.id} className="border-l-4 border-l-primary">
+                        <CardHeader>
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1 flex-1">
+                              <CardTitle className="text-lg">{question.title}</CardTitle>
+                              <CardDescription className="line-clamp-2">
+                                {question.content}
+                              </CardDescription>
+                            </div>
+                            {question.category && (
+                              <Badge variant="outline" className="ml-2">
+                                {question.category}
+                              </Badge>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-sm text-muted-foreground">
+                            Posted {new Date(question.created_at).toLocaleDateString()} at{" "}
+                            {new Date(question.created_at).toLocaleTimeString()}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
