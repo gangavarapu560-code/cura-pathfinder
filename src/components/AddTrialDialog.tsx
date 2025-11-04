@@ -82,7 +82,7 @@ export const AddTrialDialog = ({ onTrialAdded }: AddTrialDialogProps) => {
         phase: data.phase,
         status: data.status,
         start_date: data.start_date,
-        end_date: data.end_date,
+        end_date: data.end_date || null,
         eligibility_criteria: data.eligibility_criteria,
         contact_email: data.contact_email,
         researcher_id: user.id,
