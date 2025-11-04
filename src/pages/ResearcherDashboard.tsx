@@ -8,6 +8,7 @@ import { Microscope, TestTube, Users, MessageSquare, LogOut } from "lucide-react
 import { toast } from "sonner";
 import { AddTrialDialog } from "@/components/AddTrialDialog";
 import { AddQuestionDialog } from "@/components/AddQuestionDialog";
+import { CollaboratorCard } from "@/components/CollaboratorCard";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ResearcherProfile {
@@ -24,6 +25,10 @@ const ResearcherDashboard = () => {
   const [isLoadingTrials, setIsLoadingTrials] = useState(false);
   const [questions, setQuestions] = useState<any[]>([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
+  const [researchers, setResearchers] = useState<any[]>([]);
+  const [isLoadingResearchers, setIsLoadingResearchers] = useState(false);
+  const [existingRequestIds, setExistingRequestIds] = useState<string[]>([]);
+  const [currentUserId, setCurrentUserId] = useState<string>("");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,8 +45,11 @@ const ResearcherDashboard = () => {
         return;
       }
       setProfile(JSON.parse(stored));
+      setCurrentUserId(user.id);
       loadTrials();
       loadQuestions();
+      loadResearchers();
+      loadCollaborationRequests(user.id);
     };
 
     checkAuth();
@@ -83,6 +91,37 @@ const ResearcherDashboard = () => {
       console.error("Error loading questions:", error);
     } finally {
       setIsLoadingQuestions(false);
+    }
+  };
+
+  const loadResearchers = async () => {
+    setIsLoadingResearchers(true);
+    try {
+      const { data, error } = await supabase
+        .from("researcher_profiles")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setResearchers(data || []);
+    } catch (error) {
+      console.error("Error loading researchers:", error);
+    } finally {
+      setIsLoadingResearchers(false);
+    }
+  };
+
+  const loadCollaborationRequests = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("collaboration_requests")
+        .select("to_user_id")
+        .eq("from_user_id", userId);
+
+      if (error) throw error;
+      setExistingRequestIds(data?.map(req => req.to_user_id) || []);
+    } catch (error) {
+      console.error("Error loading collaboration requests:", error);
     }
   };
 
@@ -212,7 +251,25 @@ const ResearcherDashboard = () => {
                 <CardDescription>Connect with researchers in your field</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button>Search Collaborators</Button>
+                {isLoadingResearchers ? (
+                  <p className="text-muted-foreground text-center py-8">Loading researchers...</p>
+                ) : researchers.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No other researchers found yet.
+                  </p>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {researchers.map((researcher) => (
+                      <CollaboratorCard
+                        key={researcher.id}
+                        profile={researcher}
+                        currentUserId={currentUserId}
+                        existingRequestIds={existingRequestIds}
+                        onRequestSent={() => loadCollaborationRequests(currentUserId)}
+                      />
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

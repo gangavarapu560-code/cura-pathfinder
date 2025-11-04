@@ -28,7 +28,7 @@ const ResearcherOnboarding = () => {
     checkAuth();
   }, [navigate]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.name || !formData.specialty) {
@@ -36,9 +36,34 @@ const ResearcherOnboarding = () => {
       return;
     }
 
-    localStorage.setItem("researcherProfile", JSON.stringify(formData));
-    toast.success("Profile created successfully!");
-    navigate("/researcher/dashboard");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("You must be logged in");
+        navigate("/auth");
+        return;
+      }
+
+      // Save to database
+      const { error } = await supabase.from("researcher_profiles").upsert({
+        user_id: user.id,
+        name: formData.name,
+        specialty: formData.specialty,
+        interests: formData.interests || null,
+        institution: formData.institution || null,
+      });
+
+      if (error) throw error;
+
+      // Keep localStorage for backward compatibility
+      localStorage.setItem("researcherProfile", JSON.stringify(formData));
+      toast.success("Profile created successfully!");
+      navigate("/researcher/dashboard");
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      toast.error("Failed to save profile. Please try again.");
+    }
   };
 
   return (

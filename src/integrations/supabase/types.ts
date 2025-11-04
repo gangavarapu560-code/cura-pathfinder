@@ -59,6 +59,36 @@ export type Database = {
         }
         Relationships: []
       }
+      collaboration_requests: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          message: string | null
+          status: string
+          to_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          message?: string | null
+          status?: string
+          to_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          message?: string | null
+          status?: string
+          to_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       forum_questions: {
         Row: {
           category: string | null
@@ -84,6 +114,39 @@ export type Database = {
           created_at?: string
           id?: string
           title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      researcher_profiles: {
+        Row: {
+          created_at: string
+          id: string
+          institution: string | null
+          interests: string | null
+          name: string
+          specialty: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution?: string | null
+          interests?: string | null
+          name: string
+          specialty?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution?: string | null
+          interests?: string | null
+          name?: string
+          specialty?: string | null
           updated_at?: string
           user_id?: string
         }
