@@ -23,13 +23,24 @@ const ResearcherDashboard = () => {
   const [isLoadingTrials, setIsLoadingTrials] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("researcherProfile");
-    if (!stored) {
-      navigate("/researcher/onboarding");
-      return;
-    }
-    setProfile(JSON.parse(stored));
-    loadTrials();
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        navigate("/auth");
+        return;
+      }
+
+      const stored = localStorage.getItem("researcherProfile");
+      if (!stored) {
+        navigate("/researcher/onboarding");
+        return;
+      }
+      setProfile(JSON.parse(stored));
+      loadTrials();
+    };
+
+    checkAuth();
   }, [navigate]);
 
   const loadTrials = async () => {
@@ -54,10 +65,11 @@ const ResearcherDashboard = () => {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     localStorage.removeItem("researcherProfile");
     toast.success("Logged out successfully");
-    navigate("/");
+    navigate("/auth");
   };
 
   if (!profile) return null;

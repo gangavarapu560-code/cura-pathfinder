@@ -7,6 +7,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-hero">
+      {/* Header */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="flex justify-end">
+          <Button variant="ghost" onClick={() => navigate("/auth")}>
+            Sign In
+          </Button>
+        </div>
+      </div>
+
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-16">
         <div className="flex flex-col items-center justify-center min-h-[80vh] text-center">
