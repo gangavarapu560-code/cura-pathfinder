@@ -39,12 +39,33 @@ const ResearcherDashboard = () => {
         return;
       }
 
-      const stored = localStorage.getItem("researcherProfile");
-      if (!stored) {
+      // Check database for profile first
+      const { data: dbProfile, error } = await supabase
+        .from("researcher_profiles")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        console.error("Error loading profile:", error);
+      }
+
+      if (dbProfile) {
+        // Profile exists in database, use it
+        const profileData = {
+          name: dbProfile.name,
+          specialty: dbProfile.specialty || "",
+          interests: dbProfile.interests || "",
+          institution: dbProfile.institution || "",
+        };
+        setProfile(profileData);
+        localStorage.setItem("researcherProfile", JSON.stringify(profileData));
+      } else {
+        // No profile in database, redirect to onboarding
         navigate("/researcher/onboarding");
         return;
       }
-      setProfile(JSON.parse(stored));
+
       setCurrentUserId(user.id);
       loadTrials();
       loadQuestions();
