@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,14 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Heart, MapPin, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+const patientSchema = z.object({
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
+  condition: z.string().trim().min(1, "Condition is required").max(500, "Condition must be less than 500 characters"),
+  location: z.string().trim().max(200, "Location must be less than 200 characters").optional(),
+});
 
 const PatientOnboarding = () => {
   const navigate = useNavigate();
@@ -14,20 +22,56 @@ const PatientOnboarding = () => {
     condition: "",
     location: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate("/auth");
+      }
+    };
+    checkAuth();
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.name || !formData.condition) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
+    try {
+      // Validate input
+      const validated = patientSchema.parse(formData);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("You must be logged in to create a profile");
+        navigate("/auth");
+        return;
+      }
 
-    // Store in localStorage for demo purposes
-    localStorage.setItem("patientProfile", JSON.stringify(formData));
-    
-    toast.success("Profile created successfully!");
-    navigate("/patient/dashboard");
+      setIsSubmitting(true);
+
+      const { error } = await supabase
+        .from("patient_profiles")
+        .insert({
+          user_id: user.id,
+          name: validated.name,
+          condition: validated.condition,
+          location: validated.location || null,
+        });
+
+      if (error) throw error;
+      
+      toast.success("Profile created successfully!");
+      navigate("/patient/dashboard");
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error("Failed to create profile. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -95,8 +139,9 @@ const PatientOnboarding = () => {
                 type="submit" 
                 className="w-full shadow-soft hover:shadow-glow transition-all"
                 size="lg"
+                disabled={isSubmitting}
               >
-                Continue to Dashboard
+                {isSubmitting ? "Creating Profile..." : "Continue to Dashboard"}
                 <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </form>

@@ -8,6 +8,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Microscope } from "lucide-react";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().trim().email("Invalid email address").max(255, "Email too long"),
+  password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password too long"),
+});
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -20,9 +26,11 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      const validated = authSchema.parse({ email, password });
+
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email: validated.email,
+        password: validated.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
         },
@@ -33,7 +41,11 @@ const Auth = () => {
       toast.success("Account created! Please check your email to confirm.");
       navigate("/researcher/onboarding");
     } catch (error: any) {
-      toast.error(error.message || "Error signing up");
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error(error.message || "Error signing up");
+      }
     } finally {
       setLoading(false);
     }
@@ -44,9 +56,11 @@ const Auth = () => {
     setLoading(true);
 
     try {
+      const validated = authSchema.parse({ email, password });
+
       const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: validated.email,
+        password: validated.password,
       });
 
       if (error) throw error;
@@ -54,7 +68,11 @@ const Auth = () => {
       toast.success("Signed in successfully!");
       navigate("/researcher/dashboard");
     } catch (error: any) {
-      toast.error(error.message || "Error signing in");
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+      } else {
+        toast.error(error.message || "Error signing in");
+      }
     } finally {
       setLoading(false);
     }
