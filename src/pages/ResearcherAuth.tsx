@@ -15,7 +15,7 @@ const authSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters").max(100, "Password too long"),
 });
 
-const Auth = () => {
+const ResearcherAuth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -85,7 +85,7 @@ const Auth = () => {
           <div className="flex justify-center mb-4">
             <Microscope className="w-12 h-12 text-accent" />
           </div>
-          <CardTitle className="text-2xl">Welcome to CuraLink</CardTitle>
+          <CardTitle className="text-2xl">Researcher Portal</CardTitle>
           <CardDescription>Sign in or create an account to continue</CardDescription>
         </CardHeader>
         <CardContent>
@@ -162,4 +162,4 @@ const Auth = () => {
   );
 };
 
-export default Auth;
+export default ResearcherAuth;

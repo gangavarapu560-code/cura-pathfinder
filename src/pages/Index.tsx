@@ -9,9 +9,12 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-hero">
       {/* Header */}
       <div className="container mx-auto px-4 py-4">
-        <div className="flex justify-end">
-          <Button variant="ghost" onClick={() => navigate("/auth")}>
-            Sign In
+        <div className="flex justify-end gap-2">
+          <Button variant="ghost" onClick={() => navigate("/patient/auth")}>
+            Patient Sign In
+          </Button>
+          <Button variant="ghost" onClick={() => navigate("/researcher/auth")}>
+            Researcher Sign In
           </Button>
         </div>
       </div>
