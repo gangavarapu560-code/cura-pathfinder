@@ -1,130 +1,113 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, TestTube, BookOpen, Users, Star, MapPin, Calendar, LogOut } from "lucide-react";
+import { Heart, LogOut, TrendingUp, TestTube, Users, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { SearchBar } from "@/components/SearchBar";
+import { SearchResults } from "@/components/SearchResults";
 
-interface PatientProfile {
-  name: string;
-  condition: string;
-  location: string;
-}
-
-const PatientDashboard = () => {
+export default function PatientDashboardNew() {
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<PatientProfile | null>(null);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [profile, setProfile] = useState<any>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [topTrials, setTopTrials] = useState<any[]>([]);
+  const [topResearchers, setTopResearchers] = useState<any[]>([]);
+  const [topPublications, setTopPublications] = useState<any[]>([]);
 
   useEffect(() => {
-    const stored = localStorage.getItem("patientProfile");
-    if (!stored) {
-      navigate("/patient/onboarding");
+    checkAuth();
+    loadTopContent();
+  }, []);
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      navigate("/patient/auth");
       return;
     }
-    setProfile(JSON.parse(stored));
-    
-    const storedFavorites = localStorage.getItem("favorites");
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
-    }
-  }, [navigate]);
 
-  const toggleFavorite = (id: string) => {
-    const newFavorites = favorites.includes(id)
-      ? favorites.filter(f => f !== id)
-      : [...favorites, id];
-    setFavorites(newFavorites);
-    localStorage.setItem("favorites", JSON.stringify(newFavorites));
-    toast.success(favorites.includes(id) ? "Removed from favorites" : "Added to favorites");
+    const { data: dbProfile, error } = await supabase
+      .from("patient_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single();
+
+    if (error && error.code !== "PGRST116") {
+      toast.error("Error loading profile");
+    }
+
+    if (dbProfile) {
+      setProfile(dbProfile);
+    } else {
+      navigate("/patient/onboarding");
+    }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("patientProfile");
+  const loadTopContent = async () => {
+    try {
+      const [trialsResult, researchersResult, publicationsResult] = await Promise.all([
+        supabase.from('clinical_trials').select('*').eq('status', 'recruiting').order('created_at', { ascending: false }).limit(3),
+        supabase.from('researcher_profiles').select('*').order('created_at', { ascending: false }).limit(3),
+        supabase.from('publications').select('*').order('year', { ascending: false }).limit(3),
+      ]);
+
+      setTopTrials(trialsResult.data || []);
+      setTopResearchers(researchersResult.data || []);
+      setTopPublications(publicationsResult.data || []);
+    } catch (error) {
+      toast.error("Failed to load top content");
+    }
+  };
+
+  const handleSearch = async (query: string) => {
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search', {
+        body: { query, condition: profile?.condition || '' }
+      });
+
+      if (error) throw error;
+      setSearchResults(data);
+    } catch (error) {
+      toast.error("Search failed. Please try again.");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
     toast.success("Logged out successfully");
     navigate("/");
   };
 
   if (!profile) return null;
 
-  // Mock data based on condition
-  const mockTrials = [
-    {
-      id: "trial-1",
-      title: "Phase III Clinical Trial for Advanced Glioblastoma Treatment",
-      phase: "Phase III",
-      status: "Recruiting",
-      location: "Multiple Sites, USA",
-      description: "Study of novel immunotherapy combined with standard care for patients with recurrent glioblastoma."
-    },
-    {
-      id: "trial-2",
-      title: "Targeted Therapy for Brain Cancer - Early Stage",
-      phase: "Phase II",
-      status: "Recruiting",
-      location: "Boston, MA",
-      description: "Investigating effectiveness of targeted molecular therapy in early-stage brain cancer patients."
-    }
-  ];
-
-  const mockExperts = [
-    {
-      id: "expert-1",
-      name: "Dr. Sarah Mitchell",
-      specialty: "Neuro-Oncology",
-      institution: "Johns Hopkins Hospital",
-      location: "Baltimore, MD",
-      publications: 127
-    },
-    {
-      id: "expert-2",
-      name: "Dr. James Chen",
-      specialty: "Brain Cancer Research",
-      institution: "Mayo Clinic",
-      location: "Rochester, MN",
-      publications: 89
-    }
-  ];
-
-  const mockPublications = [
-    {
-      id: "pub-1",
-      title: "Novel Immunotherapy Approaches in Glioblastoma: A Comprehensive Review",
-      journal: "Nature Medicine",
-      year: "2024",
-      authors: "Mitchell S, et al."
-    },
-    {
-      id: "pub-2",
-      title: "Targeted Molecular Therapy for Recurrent Brain Tumors",
-      journal: "The Lancet Oncology",
-      year: "2024",
-      authors: "Chen J, et al."
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card shadow-soft">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+      <header className="border-b bg-card shadow-soft sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-2">
             <Heart className="w-6 h-6 text-primary" />
             <h1 className="text-2xl font-bold">CuraLink</h1>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Welcome, {profile.name}</span>
+            <span className="text-sm text-muted-foreground hidden sm:inline">Welcome, {profile.name}</span>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
+              <LogOut className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Profile Summary */}
         <Card className="mb-8 shadow-soft border-primary/20">
           <CardHeader>
@@ -140,7 +123,6 @@ const PatientDashboard = () => {
               </Badge>
               {profile.location && (
                 <Badge variant="outline" className="text-base px-4 py-2">
-                  <MapPin className="w-4 h-4 mr-1" />
                   {profile.location}
                 </Badge>
               )}
@@ -148,181 +130,138 @@ const PatientDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="trials" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
-            <TabsTrigger value="trials">
-              <TestTube className="w-4 h-4 mr-2" />
-              Clinical Trials
-            </TabsTrigger>
-            <TabsTrigger value="experts">
-              <Users className="w-4 h-4 mr-2" />
-              Health Experts
-            </TabsTrigger>
-            <TabsTrigger value="publications">
-              <BookOpen className="w-4 h-4 mr-2" />
-              Publications
-            </TabsTrigger>
-            <TabsTrigger value="favorites">
-              <Star className="w-4 h-4 mr-2" />
-              Favorites
-            </TabsTrigger>
-          </TabsList>
+        {/* Search Section */}
+        <Card className="mb-8 shadow-soft">
+          <CardHeader>
+            <CardTitle>Search for Relevant Information</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <SearchBar 
+              onSearch={handleSearch} 
+              isLoading={isSearching}
+              placeholder={`Search trials, researchers, and topics related to ${profile.condition}...`}
+            />
+          </CardContent>
+        </Card>
 
-          {/* Clinical Trials */}
-          <TabsContent value="trials" className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold">Clinical Trials for You</h2>
-              <Button variant="outline">Filter Trials</Button>
-            </div>
-            {mockTrials.map((trial) => (
-              <Card key={trial.id} className="shadow-soft hover:shadow-glow transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+        {/* Search Results */}
+        {searchResults && (
+          <div className="mb-8">
+            <SearchResults {...searchResults} />
+          </div>
+        )}
+
+        {/* Top Content Sections */}
+        {!searchResults && (
+          <Tabs defaultValue="trials" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="trials">
+                <TestTube className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Top </span>Trials
+              </TabsTrigger>
+              <TabsTrigger value="researchers">
+                <Users className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Top </span>Researchers
+              </TabsTrigger>
+              <TabsTrigger value="publications">
+                <BookOpen className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Top </span>Readings
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="trials" className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6 text-primary" />
+                  Top Clinical Trials
+                </h2>
+              </div>
+              {topTrials.length === 0 ? (
+                <Card><CardContent className="py-12 text-center text-muted-foreground">No trials available yet</CardContent></Card>
+              ) : (
+                topTrials.map((trial) => (
+                  <Card key={trial.id} className="shadow-soft hover:shadow-glow transition-shadow">
+                    <CardHeader>
                       <CardTitle className="mb-2">{trial.title}</CardTitle>
-                      <CardDescription>{trial.description}</CardDescription>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleFavorite(trial.id)}
-                    >
-                      <Star
-                        className={`w-5 h-5 ${
-                          favorites.includes(trial.id) ? "fill-accent text-accent" : ""
-                        }`}
-                      />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge>{trial.phase}</Badge>
-                    <Badge variant="secondary">{trial.status}</Badge>
-                    <Badge variant="outline">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {trial.location}
-                    </Badge>
-                  </div>
-                  <Button className="w-full sm:w-auto">View Details</Button>
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-muted-foreground mb-4 line-clamp-2">{trial.description}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge>{trial.phase}</Badge>
+                        <Badge variant="secondary">{trial.status}</Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
 
-          {/* Health Experts */}
-          <TabsContent value="experts" className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold">Health Experts</h2>
-              <Button variant="outline">Search Experts</Button>
-            </div>
-            {mockExperts.map((expert) => (
-              <Card key={expert.id} className="shadow-soft hover:shadow-glow transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle>{expert.name}</CardTitle>
-                      <CardDescription>
-                        {expert.specialty} • {expert.institution}
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleFavorite(expert.id)}
-                    >
-                      <Star
-                        className={`w-5 h-5 ${
-                          favorites.includes(expert.id) ? "fill-accent text-accent" : ""
-                        }`}
-                      />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="outline">
-                      <MapPin className="w-3 h-3 mr-1" />
-                      {expert.location}
-                    </Badge>
-                    <Badge variant="secondary">{expert.publications} Publications</Badge>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button>View Profile</Button>
-                    <Button variant="outline">Request Meeting</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
+            <TabsContent value="researchers" className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6 text-accent" />
+                  Top Researchers
+                </h2>
+              </div>
+              {topResearchers.length === 0 ? (
+                <Card><CardContent className="py-12 text-center text-muted-foreground">No researchers available yet</CardContent></Card>
+              ) : (
+                topResearchers.map((researcher) => (
+                  <Card 
+                    key={researcher.id} 
+                    className="shadow-soft hover:shadow-glow transition-shadow cursor-pointer"
+                    onClick={() => navigate(`/researcher/${researcher.user_id}`)}
+                  >
+                    <CardHeader>
+                      <CardTitle>{researcher.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2">
+                        {researcher.specialty && <Badge variant="secondary">{researcher.specialty}</Badge>}
+                        {researcher.institution && <Badge variant="outline">{researcher.institution}</Badge>}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
 
-          {/* Publications */}
-          <TabsContent value="publications" className="space-y-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold">Relevant Publications</h2>
-              <Button variant="outline">Search Publications</Button>
-            </div>
-            {mockPublications.map((pub) => (
-              <Card key={pub.id} className="shadow-soft hover:shadow-glow transition-shadow">
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+            <TabsContent value="publications" className="space-y-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-semibold flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6 text-accent" />
+                  Top Research Publications
+                </h2>
+              </div>
+              {topPublications.length === 0 ? (
+                <Card><CardContent className="py-12 text-center text-muted-foreground">No publications available yet</CardContent></Card>
+              ) : (
+                topPublications.map((pub) => (
+                  <Card key={pub.id} className="shadow-soft hover:shadow-glow transition-shadow">
+                    <CardHeader>
                       <CardTitle className="text-lg">{pub.title}</CardTitle>
-                      <CardDescription>{pub.authors}</CardDescription>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => toggleFavorite(pub.id)}
-                    >
-                      <Star
-                        className={`w-5 h-5 ${
-                          favorites.includes(pub.id) ? "fill-accent text-accent" : ""
-                        }`}
-                      />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2 mb-4">
-                    <Badge>{pub.journal}</Badge>
-                    <Badge variant="outline">
-                      <Calendar className="w-3 h-3 mr-1" />
-                      {pub.year}
-                    </Badge>
-                  </div>
-                  <Button variant="outline">Read Full Paper</Button>
-                </CardContent>
-              </Card>
-            ))}
-          </TabsContent>
-
-          {/* Favorites */}
-          <TabsContent value="favorites">
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle>Your Favorites</CardTitle>
-                <CardDescription>
-                  Items you've saved for later review
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {favorites.length === 0 ? (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Star className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No favorites yet. Start exploring and save items you're interested in!</p>
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground">You have {favorites.length} saved items</p>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground mb-3">{pub.authors}</p>
+                      <div className="flex items-center gap-2">
+                        <Badge>{pub.journal}</Badge>
+                        <Badge variant="outline">{pub.year}</Badge>
+                      </div>
+                      {pub.url && (
+                        <Button variant="link" className="p-0 h-auto mt-2" asChild>
+                          <a href={pub.url} target="_blank" rel="noopener noreferrer">
+                            Read Full Paper →
+                          </a>
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
+          </Tabs>
+        )}
       </div>
     </div>
   );
-};
-
-export default PatientDashboard;
+}

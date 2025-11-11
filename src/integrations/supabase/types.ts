@@ -89,6 +89,41 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          question_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          question_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          question_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_comments_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "forum_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_questions: {
         Row: {
           category: string | null
@@ -121,6 +156,7 @@ export type Database = {
       }
       patient_profiles: {
         Row: {
+          bio: string | null
           condition: string
           created_at: string
           id: string
@@ -130,6 +166,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          bio?: string | null
           condition: string
           created_at?: string
           id?: string
@@ -139,6 +176,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          bio?: string | null
           condition?: string
           created_at?: string
           id?: string
@@ -149,36 +187,87 @@ export type Database = {
         }
         Relationships: []
       }
+      publications: {
+        Row: {
+          abstract: string | null
+          authors: string | null
+          created_at: string
+          doi: string | null
+          id: string
+          journal: string | null
+          researcher_id: string
+          title: string
+          updated_at: string
+          url: string | null
+          year: number | null
+        }
+        Insert: {
+          abstract?: string | null
+          authors?: string | null
+          created_at?: string
+          doi?: string | null
+          id?: string
+          journal?: string | null
+          researcher_id: string
+          title: string
+          updated_at?: string
+          url?: string | null
+          year?: number | null
+        }
+        Update: {
+          abstract?: string | null
+          authors?: string | null
+          created_at?: string
+          doi?: string | null
+          id?: string
+          journal?: string | null
+          researcher_id?: string
+          title?: string
+          updated_at?: string
+          url?: string | null
+          year?: number | null
+        }
+        Relationships: []
+      }
       researcher_profiles: {
         Row: {
+          bio: string | null
           created_at: string
           id: string
           institution: string | null
           interests: string | null
+          location: string | null
           name: string
           specialty: string | null
           updated_at: string
           user_id: string
+          website: string | null
         }
         Insert: {
+          bio?: string | null
           created_at?: string
           id?: string
           institution?: string | null
           interests?: string | null
+          location?: string | null
           name: string
           specialty?: string | null
           updated_at?: string
           user_id: string
+          website?: string | null
         }
         Update: {
+          bio?: string | null
           created_at?: string
           id?: string
           institution?: string | null
           interests?: string | null
+          location?: string | null
           name?: string
           specialty?: string | null
           updated_at?: string
           user_id?: string
+          website?: string | null
         }
         Relationships: []
       }

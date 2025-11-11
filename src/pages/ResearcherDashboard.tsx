@@ -195,21 +195,76 @@ const ResearcherDashboard = () => {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="trials" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-auto">
+        <Tabs defaultValue="forums" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="forums">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              <span className="hidden sm:inline">Patient </span>Forums
+            </TabsTrigger>
             <TabsTrigger value="trials">
               <TestTube className="w-4 h-4 mr-2" />
-              Clinical Trials
+              <span className="hidden sm:inline">My </span>Trials
             </TabsTrigger>
             <TabsTrigger value="collaborators">
               <Users className="w-4 h-4 mr-2" />
               Collaborators
             </TabsTrigger>
-            <TabsTrigger value="forums">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Forums
-            </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="forums">
+            <Card className="shadow-soft">
+              <CardHeader>
+                <CardTitle>Patient Forum Questions</CardTitle>
+                <CardDescription>Answer questions and engage with patients</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <AddQuestionDialog onQuestionAdded={loadQuestions} />
+                
+                {isLoadingQuestions ? (
+                  <p className="text-muted-foreground text-center py-8">Loading questions...</p>
+                ) : questions.length === 0 ? (
+                  <p className="text-muted-foreground text-center py-8">
+                    No questions yet. Be the first to ask a question!
+                  </p>
+                ) : (
+                  <div className="space-y-4 mt-6">
+                    {questions.map((question) => (
+                      <Card 
+                        key={question.id} 
+                        className="border-l-4 border-l-primary cursor-pointer hover:shadow-glow transition-shadow"
+                        onClick={() => navigate(`/forum/${question.id}`)}
+                      >
+                        <CardHeader>
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-1 flex-1">
+                              <CardTitle className="text-lg">{question.title}</CardTitle>
+                              <CardDescription className="line-clamp-2">
+                                {question.content}
+                              </CardDescription>
+                            </div>
+                            {question.category && (
+                              <Badge variant="outline" className="ml-2 shrink-0">
+                                {question.category}
+                              </Badge>
+                            )}
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-sm text-muted-foreground">
+                            Posted {new Date(question.created_at).toLocaleDateString()} at{" "}
+                            {new Date(question.created_at).toLocaleTimeString()}
+                          </div>
+                          <Button variant="outline" size="sm" className="mt-3">
+                            View & Answer
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
 
           <TabsContent value="trials">
             <Card className="shadow-soft">
@@ -288,54 +343,6 @@ const ResearcherDashboard = () => {
                         existingRequestIds={existingRequestIds}
                         onRequestSent={() => loadCollaborationRequests(currentUserId)}
                       />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="forums">
-            <Card className="shadow-soft">
-              <CardHeader>
-                <CardTitle>Forum Discussions</CardTitle>
-                <CardDescription>Engage with community questions</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <AddQuestionDialog onQuestionAdded={loadQuestions} />
-                
-                {isLoadingQuestions ? (
-                  <p className="text-muted-foreground text-center py-8">Loading questions...</p>
-                ) : questions.length === 0 ? (
-                  <p className="text-muted-foreground text-center py-8">
-                    No questions yet. Be the first to ask a question!
-                  </p>
-                ) : (
-                  <div className="space-y-4 mt-6">
-                    {questions.map((question) => (
-                      <Card key={question.id} className="border-l-4 border-l-primary">
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-1 flex-1">
-                              <CardTitle className="text-lg">{question.title}</CardTitle>
-                              <CardDescription className="line-clamp-2">
-                                {question.content}
-                              </CardDescription>
-                            </div>
-                            {question.category && (
-                              <Badge variant="outline" className="ml-2">
-                                {question.category}
-                              </Badge>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="text-sm text-muted-foreground">
-                            Posted {new Date(question.created_at).toLocaleDateString()} at{" "}
-                            {new Date(question.created_at).toLocaleTimeString()}
-                          </div>
-                        </CardContent>
-                      </Card>
                     ))}
                   </div>
                 )}
