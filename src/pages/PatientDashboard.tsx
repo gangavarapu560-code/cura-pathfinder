@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchResults } from "@/components/SearchResults";
+import { PatientAIBot } from "@/components/PatientAIBot";
 
 export default function PatientDashboardNew() {
   const navigate = useNavigate();
@@ -262,6 +263,8 @@ export default function PatientDashboardNew() {
           </Tabs>
         )}
       </div>
+      
+      <PatientAIBot />
     </div>
   );
 }

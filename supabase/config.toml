@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.researcher-ai-bot]
 verify_jwt = false
+
+[functions.patient-ai-bot]
+verify_jwt = false
