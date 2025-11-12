@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { AddTrialDialog } from "@/components/AddTrialDialog";
 import { AddQuestionDialog } from "@/components/AddQuestionDialog";
 import { CollaboratorCard } from "@/components/CollaboratorCard";
+import { ResearcherAIBot } from "@/components/ResearcherAIBot";
 import { supabase } from "@/integrations/supabase/client";
 
 interface ResearcherProfile {
@@ -157,6 +158,9 @@ const ResearcherDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* AI Bot */}
+      {currentUserId && <ResearcherAIBot userId={currentUserId} />}
+      
       <header className="border-b bg-card shadow-soft">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
