@@ -12,7 +12,7 @@ const NotFound = () => {
         <p className="text-xl text-foreground mb-6">Page Not Found</p>
         <Button onClick={() => navigate("/")} size="lg">
           <Home className="mr-2 h-4 w-4" />
-          Go Home
+          Back to Home
         </Button>
       </div>
     </div>

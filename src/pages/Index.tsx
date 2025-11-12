@@ -66,7 +66,7 @@ const Index = () => {
             {/* Researcher Card */}
             <div 
               className="group relative bg-card rounded-2xl p-8 shadow-soft hover:shadow-glow transition-all duration-300 cursor-pointer border border-border hover:border-accent/50"
-              onClick={() => navigate("/researcher/onboarding")}
+              onClick={() => navigate("/researcher/auth")}
             >
               <div className="absolute inset-0 bg-accent/5 opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300" />
               <div className="relative z-10">
@@ -83,8 +83,8 @@ const Index = () => {
                   className="w-full border-accent/50 hover:bg-accent hover:text-accent-foreground group-hover:shadow-glow transition-all"
                   size="lg"
                 >
-                  Get Started
-                  <Sparkles className="ml-2 w-4 h-4" />
+                  Researcher Portal
+                  <Microscope className="ml-2 w-4 h-4" />
                 </Button>
               </div>
             </div>
