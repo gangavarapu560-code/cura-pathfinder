@@ -12,6 +12,7 @@ import ResearcherOnboarding from "./pages/ResearcherOnboarding";
 import ResearcherDashboard from "./pages/ResearcherDashboard";
 import ResearcherProfile from "./pages/ResearcherProfile";
 import ForumDiscussion from "./pages/ForumDiscussion";
+import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/researcher/dashboard" element={<ResearcherDashboard />} />
           <Route path="/researcher/:userId" element={<ResearcherProfile />} />
           <Route path="/forum/:questionId" element={<ForumDiscussion />} />
+          <Route path="/favorites" element={<Favorites />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -3,6 +3,9 @@ project_id = "clijxouenrbtvjcgsmdi"
 [functions.search]
 verify_jwt = false
 
+[functions.summarize-favorites]
+verify_jwt = true
+
 [functions.researcher-ai-bot]
 verify_jwt = false
 

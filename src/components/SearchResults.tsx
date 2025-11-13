@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TestTube, Users, MessageSquare, BookOpen, TrendingUp, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { FavoriteButton } from "@/components/FavoriteButton";
 
 interface SearchResult {
   matchScore: number;
@@ -82,10 +83,13 @@ export function SearchResults({ trials, researchers, questions, publications }: 
                       <CardTitle className="mb-2">{trial.title}</CardTitle>
                       <CardDescription>{trial.description}</CardDescription>
                     </div>
-                    <Badge variant="secondary" className="flex items-center gap-1 whitespace-nowrap">
-                      <TrendingUp className="w-3 h-3" />
-                      {trial.matchScore}% match
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <FavoriteButton itemType="trial" itemId={trial.id} />
+                      <Badge variant="secondary" className="flex items-center gap-1 whitespace-nowrap">
+                        <TrendingUp className="w-3 h-3" />
+                        {trial.matchScore}% match
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -123,10 +127,16 @@ export function SearchResults({ trials, researchers, questions, publications }: 
                         {researcher.specialty} • {researcher.institution}
                       </CardDescription>
                     </div>
-                    <Badge variant="secondary" className="flex items-center gap-1 whitespace-nowrap">
-                      <TrendingUp className="w-3 h-3" />
-                      {researcher.matchScore}% match
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <FavoriteButton 
+                        itemType="researcher" 
+                        itemId={researcher.id}
+                      />
+                      <Badge variant="secondary" className="flex items-center gap-1 whitespace-nowrap">
+                        <TrendingUp className="w-3 h-3" />
+                        {researcher.matchScore}% match
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -199,10 +209,16 @@ export function SearchResults({ trials, researchers, questions, publications }: 
                       <CardTitle className="text-lg">{pub.title}</CardTitle>
                       <CardDescription>{pub.authors}</CardDescription>
                     </div>
-                    <Badge variant="secondary" className="flex items-center gap-1 whitespace-nowrap">
-                      <TrendingUp className="w-3 h-3" />
-                      {pub.matchScore}% match
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <FavoriteButton 
+                        itemType="publication" 
+                        itemId={pub.id}
+                      />
+                      <Badge variant="secondary" className="flex items-center gap-1 whitespace-nowrap">
+                        <TrendingUp className="w-3 h-3" />
+                        {pub.matchScore}% match
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
