@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { query, condition } = await req.json()
+    const { query, condition, userType, location } = await req.json()
 
     if (!query) {
       return new Response(
@@ -49,7 +49,11 @@ Deno.serve(async (req) => {
       throw new Error('LOVABLE_API_KEY not configured')
     }
 
-    const systemPrompt = `You are a medical search relevance expert. Given a patient's search query and condition, score the relevance of clinical trials, researchers, forum questions, and publications on a scale of 0-100.
+    const systemPrompt = `You are a medical search relevance expert. Score the relevance of clinical trials, researchers, forum questions, and publications on a scale of 0-100 based on the user's query, condition, user type, and location.
+
+${userType === 'patient' ? 'PATIENT FOCUS: Prioritize practical information, patient-friendly language, local options, and supportive resources. Focus on trials they can join, accessible information, and community support.' : 'RESEARCHER FOCUS: Prioritize research quality, collaboration opportunities, academic rigor, and scientific depth. Focus on cutting-edge research, peer connections, and professional advancement.'}
+
+${location ? `LOCATION PRIORITY: Give higher scores (+20 points) to items matching or near location: ${location}. For trials and researchers, proximity is very important.` : ''}
 
 Return ONLY valid JSON with this exact structure:
 {
@@ -61,14 +65,16 @@ Return ONLY valid JSON with this exact structure:
 
 Only include items with score >= 30. Sort each array by score descending.`
 
-    const userPrompt = `Patient query: "${query}"
-Patient condition: "${condition || 'unknown'}"
+    const userPrompt = `User type: ${userType || 'unknown'}
+Query: "${query}"
+Condition: "${condition || 'unknown'}"
+${location ? `Location: "${location}"` : ''}
 
 Clinical Trials:
-${trials.map(t => `ID: ${t.id}, Title: ${t.title}, Description: ${t.description}, Phase: ${t.phase}, Status: ${t.status}`).join('\n')}
+${trials.map(t => `ID: ${t.id}, Title: ${t.title}, Description: ${t.description}, Phase: ${t.phase}, Status: ${t.status}${t.location ? `, Location: ${t.location}` : ''}`).join('\n')}
 
 Researchers:
-${researchers.map(r => `ID: ${r.id}, Name: ${r.name}, Specialty: ${r.specialty}, Institution: ${r.institution}, Interests: ${r.interests}`).join('\n')}
+${researchers.map(r => `ID: ${r.id}, Name: ${r.name}, Specialty: ${r.specialty}, Institution: ${r.institution}${r.location ? `, Location: ${r.location}` : ''}, Interests: ${r.interests}`).join('\n')}
 
 Forum Questions:
 ${questions.map(q => `ID: ${q.id}, Title: ${q.title}, Content: ${q.content}, Category: ${q.category}`).join('\n')}

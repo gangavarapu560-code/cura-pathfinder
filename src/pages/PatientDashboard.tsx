@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, LogOut, TrendingUp, TestTube, Users, BookOpen } from "lucide-react";
+import { Heart, LogOut, TrendingUp, TestTube, Users, BookOpen, Star } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SearchBar } from "@/components/SearchBar";
@@ -70,7 +70,12 @@ export default function PatientDashboardNew() {
     setIsSearching(true);
     try {
       const { data, error } = await supabase.functions.invoke('search', {
-        body: { query, condition: profile?.condition || '' }
+        body: { 
+          query, 
+          condition: profile?.condition || '',
+          userType: 'patient',
+          location: profile?.location || ''
+        }
       });
 
       if (error) throw error;
@@ -100,6 +105,10 @@ export default function PatientDashboardNew() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground hidden sm:inline">Welcome, {profile.name}</span>
+            <Button variant="ghost" size="sm" onClick={() => navigate('/favorites')}>
+              <Star className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Favorites</span>
+            </Button>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
               <LogOut className="w-4 h-4 sm:mr-2" />
               <span className="hidden sm:inline">Logout</span>
