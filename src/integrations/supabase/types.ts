@@ -22,6 +22,7 @@ export type Database = {
           eligibility_criteria: string | null
           end_date: string | null
           id: string
+          location: string | null
           phase: string | null
           researcher_id: string
           start_date: string | null
@@ -36,6 +37,7 @@ export type Database = {
           eligibility_criteria?: string | null
           end_date?: string | null
           id?: string
+          location?: string | null
           phase?: string | null
           researcher_id: string
           start_date?: string | null
@@ -50,6 +52,7 @@ export type Database = {
           eligibility_criteria?: string | null
           end_date?: string | null
           id?: string
+          location?: string | null
           phase?: string | null
           researcher_id?: string
           start_date?: string | null
@@ -86,6 +89,30 @@ export type Database = {
           status?: string
           to_user_id?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      favorites: {
+        Row: {
+          created_at: string
+          id: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          user_id?: string
         }
         Relationships: []
       }
