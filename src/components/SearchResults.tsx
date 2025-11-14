@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TestTube, Users, MessageSquare, BookOpen, TrendingUp, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { MessagingDialog } from "@/components/MessagingDialog";
 
 interface SearchResult {
   matchScore: number;
@@ -53,6 +55,8 @@ interface SearchResultsProps {
 
 export function SearchResults({ trials, researchers, questions, publications }: SearchResultsProps) {
   const navigate = useNavigate();
+  const [messagingOpen, setMessagingOpen] = useState(false);
+  const [selectedResearcher, setSelectedResearcher] = useState<any>(null);
   const hasResults = trials?.length || researchers?.length || questions?.length || publications?.length;
 
   if (!hasResults) {
@@ -128,6 +132,10 @@ export function SearchResults({ trials, researchers, questions, publications }: 
                       </CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); setSelectedResearcher(researcher); setMessagingOpen(true); }}>
+                        <MessageSquare className="w-4 h-4 mr-1" />
+                        Message
+                      </Button>
                       <FavoriteButton 
                         itemType="researcher" 
                         itemId={researcher.id}
@@ -234,6 +242,15 @@ export function SearchResults({ trials, researchers, questions, publications }: 
             ))}
           </div>
         </div>
+      )}
+
+      {selectedResearcher && (
+        <MessagingDialog
+          open={messagingOpen}
+          onOpenChange={setMessagingOpen}
+          recipientId={selectedResearcher.user_id}
+          recipientName={selectedResearcher.name}
+        />
       )}
     </div>
   );
