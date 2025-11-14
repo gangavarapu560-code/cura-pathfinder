@@ -25,12 +25,31 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Fetch all data from relevant tables
+    // Apply filters to database queries
+    let trialsQuery = supabase.from('clinical_trials').select('*')
+    let researchersQuery = supabase.from('researcher_profiles').select('*')
+    let publicationsQuery = supabase.from('publications').select('*')
+    
+    if (filters) {
+      if (filters.phase && filters.phase !== 'all') {
+        trialsQuery = trialsQuery.eq('phase', filters.phase)
+      }
+      if (filters.status && filters.status !== 'all') {
+        trialsQuery = trialsQuery.eq('status', filters.status)
+      }
+      if (filters.expertise) {
+        researchersQuery = researchersQuery.ilike('specialty', `%${filters.expertise}%`)
+      }
+      if (filters.publicationYear && filters.publicationYear !== 'all') {
+        publicationsQuery = publicationsQuery.eq('year', parseInt(filters.publicationYear))
+      }
+    }
+
     const [trialsResult, researchersResult, questionsResult, publicationsResult] = await Promise.all([
-      supabase.from('clinical_trials').select('*'),
-      supabase.from('researcher_profiles').select('*'),
+      trialsQuery,
+      researchersQuery,
       supabase.from('forum_questions').select('*'),
-      supabase.from('publications').select('*'),
+      publicationsQuery,
     ])
 
     if (trialsResult.error) throw trialsResult.error
