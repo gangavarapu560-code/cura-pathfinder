@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { query, condition, userType, location } = await req.json()
+    const { query, condition, userType, location, filters } = await req.json()
 
     if (!query) {
       return new Response(
@@ -25,12 +25,36 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
+    // Build filtered queries
+    let trialsQuery = supabase.from('clinical_trials').select('*')
+    let researchersQuery = supabase.from('researcher_profiles').select('*')
+    let publicationsQuery = supabase.from('publications').select('*')
+
+    // Apply filters
+    if (filters) {
+      if (filters.phase) {
+        trialsQuery = trialsQuery.eq('phase', filters.phase)
+      }
+      if (filters.status) {
+        trialsQuery = trialsQuery.eq('status', filters.status)
+      }
+      if (filters.location) {
+        trialsQuery = trialsQuery.ilike('location', `%${filters.location}%`)
+      }
+      if (filters.expertise) {
+        researchersQuery = researchersQuery.ilike('specialty', `%${filters.expertise}%`)
+      }
+      if (filters.publicationYear) {
+        publicationsQuery = publicationsQuery.gte('year', filters.publicationYear)
+      }
+    }
+
     // Fetch all data from relevant tables
     const [trialsResult, researchersResult, questionsResult, publicationsResult] = await Promise.all([
-      supabase.from('clinical_trials').select('*'),
-      supabase.from('researcher_profiles').select('*'),
+      trialsQuery,
+      researchersQuery,
       supabase.from('forum_questions').select('*'),
-      supabase.from('publications').select('*'),
+      publicationsQuery,
     ])
 
     if (trialsResult.error) throw trialsResult.error

@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SearchBar } from "@/components/SearchBar";
 import { SearchResults } from "@/components/SearchResults";
+import { SearchFilters, SearchFiltersType } from "@/components/SearchFilters";
 import { PatientAIBot } from "@/components/PatientAIBot";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export default function PatientDashboardNew() {
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ export default function PatientDashboardNew() {
   const [topTrials, setTopTrials] = useState<any[]>([]);
   const [topResearchers, setTopResearchers] = useState<any[]>([]);
   const [topPublications, setTopPublications] = useState<any[]>([]);
+  const [filters, setFilters] = useState<SearchFiltersType>({});
 
   useEffect(() => {
     checkAuth();
@@ -69,14 +72,15 @@ export default function PatientDashboardNew() {
   const handleSearch = async (query: string) => {
     setIsSearching(true);
     try {
-      const { data, error } = await supabase.functions.invoke('search', {
-        body: { 
-          query, 
-          condition: profile?.condition || '',
-          userType: 'patient',
-          location: profile?.location || ''
-        }
-      });
+    const { data, error } = await supabase.functions.invoke('search', {
+      body: { 
+        query, 
+        condition: profile?.condition || '', 
+        userType: 'patient',
+        location: profile?.location || '',
+        filters
+      }
+    });
 
       if (error) throw error;
       setSearchResults(data);
@@ -146,11 +150,16 @@ export default function PatientDashboardNew() {
             <CardTitle>Search for Relevant Information</CardTitle>
           </CardHeader>
           <CardContent>
-            <SearchBar 
-              onSearch={handleSearch} 
-              isLoading={isSearching}
-              placeholder={`Search trials, researchers, and topics related to ${profile.condition}...`}
-            />
+            <div className="flex gap-2">
+              <div className="flex-1">
+                <SearchBar 
+                  onSearch={handleSearch} 
+                  isLoading={isSearching}
+                  placeholder="Search trials, researchers, and topics..."
+                />
+              </div>
+              <SearchFilters filters={filters} onFiltersChange={setFilters} />
+            </div>
           </CardContent>
         </Card>
 
