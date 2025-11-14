@@ -2,20 +2,29 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Loader2 } from "lucide-react";
+import { SearchFilters, SearchFiltersType } from "@/components/SearchFilters";
 
 interface SearchBarProps {
-  onSearch: (query: string) => void;
+  onSearch: (query: string, filters?: SearchFiltersType) => void;
   isLoading?: boolean;
   placeholder?: string;
 }
 
 export function SearchBar({ onSearch, isLoading, placeholder }: SearchBarProps) {
   const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<SearchFiltersType>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
-      onSearch(query.trim());
+      onSearch(query.trim(), filters);
+    }
+  };
+
+  const handleFiltersChange = (newFilters: SearchFiltersType) => {
+    setFilters(newFilters);
+    if (query.trim()) {
+      onSearch(query.trim(), newFilters);
     }
   };
 
@@ -32,6 +41,7 @@ export function SearchBar({ onSearch, isLoading, placeholder }: SearchBarProps) 
           disabled={isLoading}
         />
       </div>
+      <SearchFilters filters={filters} onFiltersChange={handleFiltersChange} />
       <Button type="submit" disabled={isLoading || !query.trim()}>
         {isLoading ? (
           <>

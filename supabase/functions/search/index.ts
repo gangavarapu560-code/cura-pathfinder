@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { query, condition, userType, location } = await req.json()
+    const { query, condition, userType, location, filters } = await req.json()
 
     if (!query) {
       return new Response(
