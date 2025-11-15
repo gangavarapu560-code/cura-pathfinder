@@ -83,8 +83,8 @@ const Index = () => {
                   className="w-full border-accent/50 hover:bg-accent hover:text-accent-foreground group-hover:shadow-glow transition-all"
                   size="lg"
                 >
-                  Researcher Portal
-                  <Microscope className="ml-2 w-4 h-4" />
+                  Get Started
+                  <Sparkles className="ml-2 w-4 h-4" />
                 </Button>
               </div>
             </div>
